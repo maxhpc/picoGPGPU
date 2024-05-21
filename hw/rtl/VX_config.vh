@@ -117,7 +117,8 @@
 `endif
 
 `ifndef MEM_BLOCK_SIZE
-`define MEM_BLOCK_SIZE 64
+//`define MEM_BLOCK_SIZE 64
+`define MEM_BLOCK_SIZE 4
 `endif
 
 `ifndef MEM_ADDR_WIDTH

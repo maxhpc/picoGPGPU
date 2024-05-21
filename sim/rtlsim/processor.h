@@ -17,15 +17,13 @@
 
 namespace vortex {
 
-class RAM;
-
 class Processor {
 public:
   
   Processor();
   ~Processor();
 
-  void attach_ram(RAM* ram);
+  void attach_ram(void* ram);
 
   int run();
 

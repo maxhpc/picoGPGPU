@@ -11,6 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <stdlib.h>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -21,7 +22,6 @@
 #include <VX_types.h>
 #include "processor.h"
 
-#define RAM_PAGE_SIZE 4096
 
 using namespace vortex;
 
@@ -65,13 +65,13 @@ int main(int argc, char **argv) {
 	parse_args(argc, argv);	
 
 	// create memory module
-	vortex::RAM ram(0, RAM_PAGE_SIZE);
+	void *ram = malloc(1ul<<32);
 
 	// create processor
 	vortex::Processor processor;
 
 	// attach memory module
-	processor.attach_ram(&ram);
+	processor.attach_ram(ram);
 
 	// setup base DCRs
 	const uint64_t startup_addr(STARTUP_ADDR);
@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
 	processor.write_dcr(VX_DCR_BASE_MPM_CLASS, 0);	
 
 	// load program
-	{		
+/*	{		
 		std::string program_ext(fileExtension(program));
 		if (program_ext == "bin") {
 			ram.loadBinImage(program, startup_addr);
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 			std::cout << "*** error: only *.bin or *.hex images supported." << std::endl;
 			return -1;
 		}
-	}
+	}*/
 
 	// run simulation
 	exitcode = processor.run();
