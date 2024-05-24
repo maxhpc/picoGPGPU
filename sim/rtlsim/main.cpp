@@ -82,6 +82,12 @@ int main(int argc, char **argv) {
 	processor.write_dcr(VX_DCR_BASE_MPM_CLASS, 0);	
 
 	// load program
+	FILE *f = fopen(program, "rb");
+	fseek(f, 0, SEEK_END);
+	size_t fsize = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	fread(ram+startup_addr, fsize, 1, f);
+	fclose(f);
 /*	{		
 		std::string program_ext(fileExtension(program));
 		if (program_ext == "bin") {
@@ -96,6 +102,7 @@ int main(int argc, char **argv) {
 
 	// run simulation
 	exitcode = processor.run();
+	free(ram);
 	
 	if (riscv_test) {
 		if (1 == exitcode) {

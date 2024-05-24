@@ -194,7 +194,10 @@ private:
     if (clk) {
      if (device_->mem_valid[0][0]) {
       if (ram_ != nullptr) {
-       device_->mem_rdata[0][0] = *(uint32_t*)((uint64_t)ram_ +device_->mem_addr[0][0]);
+printf("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz %x\n", *(uint32_t*)(ram_+0x80000000));
+printf("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz %x, %x\n", device_->mem_addr[0][0], *(uint32_t*)(ram_+device_->mem_addr[0][0]));
+       device_->mem_rdata[0][0] = *(uint32_t*)(ram_ +device_->mem_addr[0][0]);
+device_->mem_rdata[0][0] = 0x12345678;
       }
      }
      device_->mem_ready[0][0] = device_->mem_valid[0][0];

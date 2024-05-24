@@ -7,3 +7,6 @@
 [submodule "third_party/ramulator"]
 	path = third_party/ramulator
 	url = https://github.com/CMU-SAFARI/ramulator.git
+[submodule "hw/rtl/picorv32"]
+	path = hw/rtl/picorv32
+	url = https://github.com/maxhpc/picorv32.git

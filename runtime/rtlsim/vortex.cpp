@@ -19,6 +19,8 @@
 #include <future>
 #include <list>
 #include <chrono>
+#include <string.h>
+#include <unistd.h>
 
 #include <vortex.h>
 #include <malloc.h>
@@ -29,8 +31,6 @@
 #include <mem.h>
 #include <util.h>
 #include <processor.h>
-
-#define RAM_PAGE_SIZE 4096
 
 #ifndef NDEBUG
 #define DBGPRINT(format, ...) do { printf("[VXDRV] " format "", ##__VA_ARGS__); } while (0)
@@ -44,37 +44,13 @@ using namespace vortex;
 
 class vx_device {    
 public:
-    vx_device() 
-        : ram_(0, RAM_PAGE_SIZE)
-        , global_mem_(
-            ALLOC_BASE_ADDR,
-            ALLOC_MAX_ADDR - ALLOC_BASE_ADDR,
-            RAM_PAGE_SIZE,
-            CACHE_BLOCK_SIZE)
-    {
-        processor_.attach_ram(&ram_);
+    vx_device() { 
+	ram = malloc(1ul<<32);
+        processor_.attach_ram(ram);
     }
 
-    ~vx_device() {    
-        if (future_.valid()) {
-            future_.wait();
-        }
-    }
-
-    int mem_alloc(uint64_t size, uint64_t* dev_addr) {
-        return global_mem_.allocate(size, dev_addr);
-    }
-
-    int mem_free(uint64_t dev_addr) {
-        return global_mem_.release(dev_addr);
-    }
-
-    int mem_info(uint64_t* mem_free, uint64_t* mem_used) const {
-        if (mem_free)
-            *mem_free = global_mem_.free();
-        if (mem_used)
-            *mem_used = global_mem_.allocated();
-        return 0;
+    ~vx_device() {
+    	free(ram);
     }
 
     int upload(uint64_t dest_addr, const void* src, uint64_t size) {
@@ -90,8 +66,10 @@ public:
             }
         }
         printf("\n");*/
-        
-        ram_.write((const uint8_t*)src, dest_addr, size);
+       
+printf("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx %lx\n", dest_addr);
+        memcpy(ram+dest_addr, src, size);
+printf("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy %x\n", *(uint32_t*)(ram+0x80000000));
         return 0;
     }
 
@@ -100,7 +78,7 @@ public:
         if (src_addr + asize > GLOBAL_MEM_SIZE)
             return -1;
 
-        ram_.read((uint8_t*)dest, src_addr, size);
+        memcpy((uint8_t*)dest, ram+src_addr, size);
         
         /*printf("VXDRV: download %ld bytes to 0x%lx:", size, uintptr_t((uint8_t*)dest));
         for (int i = 0;  i < (asize / CACHE_BLOCK_SIZE); ++i) {
@@ -115,11 +93,6 @@ public:
     }
 
     int start(uint64_t krnl_addr, uint64_t args_addr) {   
-        // ensure prior run completed
-        if (future_.valid()) {
-            future_.wait();
-        }
-
         // set kernel info
         this->write_dcr(VX_DCR_BASE_STARTUP_ADDR0, krnl_addr & 0xffffffff);
         this->write_dcr(VX_DCR_BASE_STARTUP_ADDR1, krnl_addr >> 32);
@@ -127,31 +100,16 @@ public:
         this->write_dcr(VX_DCR_BASE_STARTUP_ARG1, args_addr >> 32);
 
         // start new run
-        future_ = std::async(std::launch::async, [&]{
-            processor_.run();
-        });
+        processor_.run();
         return 0;
     }
 
     int wait(uint64_t timeout) {
-        if (!future_.valid())
-            return 0;
         uint64_t timeout_sec = timeout / 1000;
-        std::chrono::seconds wait_time(1);
-        for (;;) {
-            // wait for 1 sec and check status
-            auto status = future_.wait_for(wait_time);
-            if (status == std::future_status::ready 
-             || 0 == timeout_sec--)
-                break;
-        }
         return 0;
     }
 
     int write_dcr(uint32_t addr, uint32_t value) {
-        if (future_.valid()) {
-            future_.wait(); // ensure prior run completed
-        }        
         processor_.write_dcr(addr, value);
         dcrs_.write(addr, value);
         return 0;
@@ -163,11 +121,9 @@ public:
 
 private:
 
-    RAM                 ram_;
+    void *ram;
     Processor           processor_;
-    MemoryAllocator     global_mem_;
     DeviceConfig        dcrs_;
-    std::future<void>   future_;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -261,8 +217,10 @@ extern int vx_mem_alloc(vx_device_h hdevice, uint64_t size, uint64_t* dev_addr) 
 
     DBGPRINT("MEM_ALLOC: size=%ld\n", size);
 
+    *dev_addr = 0x40;
+
     vx_device *device = ((vx_device*)hdevice);
-    return device->mem_alloc(size, dev_addr);
+    return 0;
 }
 
 extern int vx_mem_free(vx_device_h hdevice, uint64_t dev_addr) {
@@ -275,7 +233,7 @@ extern int vx_mem_free(vx_device_h hdevice, uint64_t dev_addr) {
     DBGPRINT("MEM_FREE: dev_addr=0x%lx\n", dev_addr);
 
     vx_device *device = ((vx_device*)hdevice);
-    return device->mem_free(dev_addr);
+    return 0;
 }
 
 extern int vx_mem_info(vx_device_h hdevice, uint64_t* mem_free, uint64_t* mem_used) {
@@ -285,7 +243,7 @@ extern int vx_mem_info(vx_device_h hdevice, uint64_t* mem_free, uint64_t* mem_us
     DBGPRINT("%s\n", "MEM_INFO");
 
     auto device = ((vx_device*)hdevice);
-    return device->mem_info(mem_free, mem_used);
+    return 0;
 }
 
 extern int vx_copy_to_dev(vx_device_h hdevice, uint64_t dev_addr, const void* host_ptr, uint64_t size) {
