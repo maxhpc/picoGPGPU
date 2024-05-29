@@ -177,7 +177,6 @@ extern int vx_upload_kernel_file(vx_device_h hdevice, const char* filename, uint
     std::cout << "error: " << filename << " not found" << std::endl;
     return -1;
   }
-printf("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF %s\n", filename);
 
   // read file content
   ifs.seekg(0, ifs.end);

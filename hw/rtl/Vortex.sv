@@ -90,7 +90,7 @@ module Vortex(
       .eoi(),
      /**/
      `ifdef RISCV_FORMAL
-      .rvfi_valid,
+      .rvfi_valid    (),
       .rvfi_order    (),
       .rvfi_insn     (),
       .rvfi_trap     (),

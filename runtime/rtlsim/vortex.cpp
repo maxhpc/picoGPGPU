@@ -67,9 +67,7 @@ public:
         }
         printf("\n");*/
        
-printf("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx %lx\n", dest_addr);
         memcpy(ram+dest_addr, src, size);
-printf("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy %x\n", *(uint32_t*)(ram+0x80000000));
         return 0;
     }
 
